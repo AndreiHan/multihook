@@ -1,0 +1,55 @@
+[workspace]
+members = [
+    "hook_cli",
+    "dll/multi_hook",
+    "dll/crash_hook",
+    "utils/pipe_com",
+    "utils/msg_protocol",
+    "utils/dll_injector",
+    "hook_tester"
+]
+default-members = [
+    "hook_cli",
+    "dll/multi_hook",
+    "dll/crash_hook",
+    "utils/pipe_com",
+    "utils/msg_protocol",
+    "utils/dll_injector",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.1"
+authors = ["MH"]
+edition = "2021"
+rust-version = "1.81"
+license-file = "LICENSE"
+
+[workspace.dependencies]
+multi_hook = { path = "dll/multi_hook" }
+crash_hook = { path = "dll/crash_hook" }
+
+pipe_com = { path = "utils/pipe_com" }
+msg_protocol = { path = "utils/msg_protocol" }
+dll_injector = { path = "utils/dll_injector" }
+detours-sys = { path = "utils/detours-sys" }
+
+windows = "0.58"
+anyhow = "1.0"
+log = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = "0.4"
+
+[profile.release]
+opt-level = 3
+panic = "abort"
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+debug = false
+
+[workspace.lints.clippy]
+pedantic = { level = "warn", priority = -1 }
+dbg_macro = "deny"
+todo = "deny"

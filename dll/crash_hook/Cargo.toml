@@ -1,0 +1,33 @@
+[package]
+name = "crash_hook"
+description = "Hook for crashing the process"
+authors.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+build = "build.rs"
+
+[lib]
+crate-type = ["cdylib"]
+
+[build-dependencies]
+tauri-winres = "0.1"
+
+[dependencies]
+pipe_com.workspace = true
+msg_protocol.workspace = true
+dll_injector.workspace = true
+
+windows = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_System_SystemServices",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Threading",
+] }
+
+[package.metadata.tauri-winres]
+LegalCopyright = "MH©2024"
+OriginalFilename = "crash_hook.dll"
+
+[lints]
+workspace = true
