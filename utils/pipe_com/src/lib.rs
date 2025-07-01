@@ -8,20 +8,20 @@ use std::{
     time,
 };
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use windows::{
-    core::{HSTRING, PCWSTR},
     Win32::{
         Foundation::{CloseHandle, GENERIC_READ, GENERIC_WRITE, HANDLE},
         Storage::FileSystem::{
-            CreateFileW, ReadFile, WriteFile, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_NONE,
-            OPEN_EXISTING, PIPE_ACCESS_DUPLEX,
+            CreateFileW, FILE_FLAGS_AND_ATTRIBUTES, FILE_SHARE_NONE, OPEN_EXISTING,
+            PIPE_ACCESS_DUPLEX, ReadFile, WriteFile,
         },
         System::Pipes::{
-            ConnectNamedPipe, CreateNamedPipeW, SetNamedPipeHandleState, WaitNamedPipeW,
-            PIPE_READMODE_MESSAGE, PIPE_TYPE_MESSAGE, PIPE_UNLIMITED_INSTANCES, PIPE_WAIT,
+            ConnectNamedPipe, CreateNamedPipeW, PIPE_READMODE_MESSAGE, PIPE_TYPE_MESSAGE,
+            PIPE_UNLIMITED_INSTANCES, PIPE_WAIT, SetNamedPipeHandleState, WaitNamedPipeW,
         },
     },
+    core::{HSTRING, PCWSTR},
 };
 
 const PIPE_NAME: &str = "\\\\.\\pipe\\multihookpipe";
@@ -140,7 +140,7 @@ pub fn start_monitor(max_instances: Option<u32>) -> ThreadResults {
         for _ in 0..max_instances.unwrap_or(1) {
             let pipe_name = HSTRING::from(PIPE_NAME);
             let named_pipe = CreateNamedPipeW(
-                PCWSTR::from_raw(pipe_name.as_wide().as_ptr()),
+                PCWSTR::from_raw(pipe_name.as_ptr()),
                 PIPE_ACCESS_DUPLEX,
                 PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
                 max_instances.unwrap_or(PIPE_UNLIMITED_INSTANCES),
@@ -174,29 +174,32 @@ pub fn start_monitor(max_instances: Option<u32>) -> ThreadResults {
 }
 
 unsafe fn monitor_connection(pipe: HANDLE) -> JoinHandle<Result<String>> {
-    debug!("Established connection");
-    let moved_pipe = Arc::new(Mutex::new(SafeHandle(pipe.0)));
-    std::thread::spawn(move || loop {
-        let mut buffer = [0u8; 1024];
+    unsafe {
+        debug!("Established connection");
+        let moved_pipe = Arc::new(Mutex::new(SafeHandle(pipe.0)));
+        std::thread::spawn(move || {
+            loop {
+                let mut buffer = [0u8; 1024];
 
-        let pipe = moved_pipe.lock().unwrap();
-        let data = match ReadFile(HANDLE(pipe.0), Some(&mut buffer), None, None) {
-            Ok(()) => {
-                let data = String::from_utf8(buffer.to_vec())?
-                    .trim_matches(char::from(0))
-                    .to_owned();
-                data
+                let pipe = moved_pipe.lock().unwrap();
+                let data = match ReadFile(HANDLE(pipe.0), Some(&mut buffer), None, None) {
+                    Ok(()) => {
+                        String::from_utf8(buffer.to_vec())?
+                            .trim_matches(char::from(0))
+                            .to_owned()
+                    }
+                    Err(err) => {
+                        error!("Failed to read from pipe: {err:?}");
+                        continue;
+                    }
+                };
+                let status = CloseHandle(HANDLE(pipe.0));
+                debug!("Close connection to named pipe handle status: {status:?}");
+                debug!("Data: {data}");
+                return Ok(data);
             }
-            Err(err) => {
-                error!("Failed to read from pipe: {err:?}");
-                continue;
-            }
-        };
-        let status = CloseHandle(HANDLE(pipe.0));
-        debug!("Close connection to named pipe handle status: {status:?}");
-        debug!("Data: {data}");
-        return Ok(data);
-    })
+        })
+    }
 }
 
 /// Writes data to a named pipe.
@@ -217,9 +220,9 @@ pub fn write_to_pipe(data: &str) -> Result<()> {
     let mut dw_written: u32 = 0;
     let pipe_name = HSTRING::from(PIPE_NAME);
     unsafe {
-        let _ = WaitNamedPipeW(PCWSTR::from_raw(pipe_name.as_wide().as_ptr()), 30000);
+        let _ = WaitNamedPipeW(PCWSTR::from_raw(pipe_name.as_ptr()), 30000);
         let h_pipe = match CreateFileW(
-            PCWSTR::from_raw(pipe_name.as_wide().as_ptr()),
+            PCWSTR::from_raw(pipe_name.as_ptr()),
             GENERIC_READ.0 | GENERIC_WRITE.0,
             FILE_SHARE_NONE,
             None,
@@ -250,7 +253,7 @@ pub fn write_to_pipe(data: &str) -> Result<()> {
             }
         }
 
-        match WriteFile(h_pipe, Some(data.as_bytes()), Some(&mut dw_written), None) {
+        match WriteFile(h_pipe, Some(data.as_bytes()), Some(&raw mut dw_written), None) {
             Ok(()) => {
                 debug!("Wrote to pipe: {data:?}");
             }

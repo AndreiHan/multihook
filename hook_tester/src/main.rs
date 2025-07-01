@@ -1,8 +1,8 @@
 use clap::Parser;
 use std::{env::current_exe, path::PathBuf};
 use windows::{
-    core::{HSTRING, PCWSTR},
     Win32::System::{LibraryLoader::LoadLibraryW, Threading::Sleep},
+    core::{HSTRING, PCWSTR},
 };
 
 #[derive(Parser, Debug)]
@@ -56,7 +56,7 @@ fn main() {
     unsafe {
         println!(
             "Load Status: {:?}",
-            LoadLibraryW(PCWSTR::from_raw(dll_path.as_wide().as_ptr()))
+            LoadLibraryW(PCWSTR::from_raw(dll_path.as_ptr()))
         );
         Sleep(8000);
         std::thread::sleep(std::time::Duration::from_secs(args.sleep_time));

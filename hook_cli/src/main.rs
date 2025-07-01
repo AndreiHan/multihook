@@ -44,7 +44,11 @@ fn main() -> Result<()> {
     let dll_path = dll_injector::get_dll_path(args.crash, args.pid)?;
     let thread_results = pipe_com::start_monitor(Some(args.events_per_pid));
 
-    info!("Injecting DLL: {:?}, into: {:?}", dll_path, args.pid);
+    info!(
+        "Injecting DLL: {}, into: {:?}",
+        dll_path.display(),
+        args.pid
+    );
     match dll_injector::inject(&dll_path, args.pid) {
         Ok(status) => {
             info!("DLL injected successfully, exit status");

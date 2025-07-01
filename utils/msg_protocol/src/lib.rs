@@ -3,7 +3,7 @@ extern crate log;
 
 use std::{env, fmt, process};
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use chrono::{Timelike, Utc};
 use serde::{Deserialize, Serialize};
 

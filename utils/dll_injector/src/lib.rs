@@ -9,17 +9,17 @@ use std::{
 };
 
 use windows::{
-    core::{s, w, HSTRING, PCWSTR},
     Win32::{
-        Foundation::{CloseHandle, GetLastError, BOOL, HMODULE},
+        Foundation::{CloseHandle, GetLastError, HMODULE},
         System::{
             Diagnostics::Debug::WriteProcessMemory,
             LibraryLoader::{
-                DisableThreadLibraryCalls, FreeLibraryAndExitThread, GetModuleHandleExW,
-                GetModuleHandleW, GetProcAddress, GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                DisableThreadLibraryCalls, FreeLibraryAndExitThread,
+                GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, GetModuleHandleExW, GetModuleHandleW,
+                GetProcAddress,
             },
             Memory::{
-                VirtualAllocEx, VirtualFreeEx, MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_READWRITE,
+                MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_READWRITE, VirtualAllocEx, VirtualFreeEx,
             },
             SystemInformation::{
                 IMAGE_FILE_MACHINE, IMAGE_FILE_MACHINE_AMD64, IMAGE_FILE_MACHINE_ARM64,
@@ -27,16 +27,17 @@ use windows::{
             },
             Threading::{
                 CreateRemoteThread, GetExitCodeThread, IsWow64Process, IsWow64Process2,
-                OpenProcess, WaitForSingleObject, PROCESS_QUERY_LIMITED_INFORMATION,
-                PROCESS_VM_OPERATION, PROCESS_VM_WRITE,
+                OpenProcess, PROCESS_QUERY_LIMITED_INFORMATION, PROCESS_VM_OPERATION,
+                PROCESS_VM_WRITE, WaitForSingleObject,
             },
         },
     },
+    core::{BOOL, HSTRING, PCWSTR, s, w},
 };
 
 use windows_version::OsVersion;
 
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 
 const HOOK_DLL_NAME: &str = "multi_hook.dll";
 const CRASH_DLL_NAME: &str = "crash_hook.dll";
@@ -66,7 +67,7 @@ fn get_pid_arch_new(pid: u32) -> Result<SupportedArch> {
         };
 
         let mut image_file_machine = IMAGE_FILE_MACHINE::default();
-        let status = IsWow64Process2(process_handle, &mut image_file_machine, None);
+        let status = IsWow64Process2(process_handle, &raw mut image_file_machine, None);
 
         let handle_status = CloseHandle(process_handle);
         debug!("Close process handle status: {handle_status:?}");
@@ -106,7 +107,7 @@ fn get_pid_arch_legacy(pid: u32) -> Result<SupportedArch> {
         };
 
         let mut is_wow64: BOOL = BOOL(1);
-        let status = IsWow64Process(process_handle, &mut is_wow64);
+        let status = IsWow64Process(process_handle, &raw mut is_wow64);
 
         let close_status = CloseHandle(process_handle);
         debug!("Close process handle status: {close_status:?}");
@@ -156,7 +157,7 @@ pub fn get_dll_path(crash: bool, target_pid: u32) -> Result<PathBuf> {
         .parent()
         .ok_or(anyhow!("Failed to get parent directory"))?;
 
-    debug!("Path: {path:?}");
+    debug!("Path: {}", path.display());
 
     let path = path.join("lib");
 
@@ -318,7 +319,7 @@ pub fn inject(dll_path: &Path, pid: u32) -> Result<u32> {
 /// retrieving the module handle.
 pub fn get_module(dll_name: &str, custom_flag: Option<u32>) -> Result<HMODULE> {
     let name = HSTRING::from(dll_name);
-    let address = PCWSTR::from_raw(name.as_wide().as_ptr());
+    let address = PCWSTR::from_raw(name.as_ptr());
     unsafe {
         let mut h_module = HMODULE::default();
         GetModuleHandleExW(

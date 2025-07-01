@@ -1,11 +1,6 @@
 # MultiHook
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](LICENSE.txt)
-![Rust](https://img.shields.io/badge/Rust-1.81%2B-blue?logo=rust)
-
 A modular Rust workspace for DLL injection, process hooking, and inter-process communication on Windows.
-
----
 
 ## Overview
 
@@ -21,17 +16,15 @@ A modular Rust workspace for DLL injection, process hooking, and inter-process c
 
 ## Workspace Structure
 
-```
-hook_cli      - Command-line tool for injecting DLLs and monitoring events
-multi_hook    - Main DLL for process/thread event hooks
-dll/crash_hook- DLL that triggers a crash in the target process
-hook_tester   - Utility for testing DLL injection and hook behavior
-utils/pipe_com      - Named pipe communication library
-utils/msg_protocol  - Message protocol definitions and serialization
-utils/dll_injector  - DLL injection logic and helpers
-```
+- hook_cli — Command-line tool for injecting DLLs and monitoring events.
+- multi_hook — Main DLL for process/thread event hooks.
+- crash_hook — DLL that triggers a crash in the target process.
+- hook_tester — Utility for testing DLL injection and hook behavior.
+- pipe_com — Named pipe communication library.
+- msg_protocol — Message protocol definitions and serialization.
+- dll_injector — DLL injection logic and helpers.
 
-## Getting Started
+## Usage
 
 ### Building
 
@@ -46,9 +39,7 @@ build.bat
 build-test.bat
 ```
 
-### Usage
-
-#### CLI Example
+### CLI Example
 
 Inject the main hook DLL into a process:
 
@@ -64,18 +55,14 @@ hook_cli.exe --pid <target_pid> --crash
 
 See `--help` for all options.
 
-#### Testing
+### Testing
 
-Use `hook_tester` to simulate a process and test hook injection:
+Use hook_tester to simulate a process and test hook injection:
 
 ```sh
 hook_tester.exe
 ```
 
-## Contributing
-
-Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
-
 ## License
 
-This project is licensed under the GNU General Public License v3.0. See [LICENSE.txt](LICENSE.txt) for details.
+This project is licensed under the GNU General Public License v3.0. See LICENSE.txt for details.

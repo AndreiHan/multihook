@@ -7,7 +7,7 @@ use windows::Win32::{
 
 static DLL_NAME: &str = "multi_hook.dll";
 
-#[no_mangle]
+#[unsafe(no_mangle)]
 #[allow(non_snake_case)]
 extern "system" fn DllMain(_: HINSTANCE, call_reason: u32, _: *mut ()) -> bool {
     match call_reason {
